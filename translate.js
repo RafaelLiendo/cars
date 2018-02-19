@@ -6,15 +6,11 @@ function byCategoryCode(rate) {
     return rate.vehicle.category;
 }
 
-function byAcriss(rate) {
-    return rate.vehicle.acriss;
-}
-
 function ratesToCompanies(rates){
     let ratesByCompanyCode = _.groupBy(rates, byCompanyCode)
-    return _.mapValues(ratesByCompanyCode, (rate) => {
+    return _.mapValues(ratesByCompanyCode, (groupedRates) => {
         return {
-            description: rates[0].company.name,
+            description: groupedRates[0].company.name,
             offices: [{
                 latitude: 'SOME_VALUE',
                 longitude: 'SOME_VALUE'
@@ -24,7 +20,7 @@ function ratesToCompanies(rates){
 }
 
 function ratesToClusters(rates) {
-    let companiesByCategory = nest(rates, [byCategoryCode, byCompanyCode, byAcriss]);
+    let companiesByCategory = nest(rates, [byCategoryCode, byCompanyCode]);
     return _.map(companiesByCategory, (companies, categoryCode) => {
         return {
             category: {
@@ -33,44 +29,42 @@ function ratesToClusters(rates) {
                 passengers: 'SOME_VALUE',
                 baggage_big: 'SOME_VALUE',
                 baggage_small: 'SOME_VALUE'
-            },            
-            companies: _.flatMap(_.map(companies, (acrissCodes, companyCode) => {
-                return _.map(acrissCodes, (rates, acriss) => {
-                    return {
-                        company_id: companyCode,
-                        vehicle: rates[0].vehicle,
-                        rates: _.map(rates, (rate) => {
-                            return {
-                                ids: [
-                                    rate.availability_id
-                                ],
-                                default_rate: 'SOME_VALUE',
-                                price: rate.rate_price,
-                                capabilities: _.map(rate.capabilities, (description, code) => {
-                                    return  {
-                                        code: code.replace(/[|]/g, ''),
-                                        description: description,
-                                        category: 'SOME_VALUE'
-                                    };
-                                }),
-                                additional_daily_price: {
-                                    amount: 'SOME_VALUE',
-                                    currency: {
-                                        code: 'SOME_VALUE',
-                                        prefix: 'SOME_VALUE'
-                                    }
-                                },
-                                additional_information : {
-                                    rate_codes: rate.rate_codes,
-                                    acriss: acriss,
-                                    capabilities_codes: Object.keys(rate.capabilities).map((code) => code.replace(/[|]/g, ''))
-                                }                                
-                            };
-                        }),
-                        suggested: 'SOME_VALUE'
-                    };
-                })                
-            }))
+            }, 
+            companies: _.map(companies, (rates, companyCode) => {
+                return {
+                    company_id: companyCode,
+                    vehicle: rates[0].vehicle,
+                    rates: _.map(rates, (rate) => {
+                        return {
+                            ids: [
+                                rate.availability_id
+                            ],
+                            default_rate: 'SOME_VALUE',
+                            price: rate.rate_price,
+                            capabilities: _.map(rate.capabilities, (description, code) => {
+                                return  {
+                                    code: code.replace(/\[|\]/g, ''),
+                                    description: description,
+                                    category: 'SOME_VALUE'
+                                };
+                            }),
+                            additional_daily_price: {
+                                amount: 'SOME_VALUE',
+                                currency: {
+                                    code: 'SOME_VALUE',
+                                    prefix: 'SOME_VALUE'
+                                }
+                            },
+                            additional_information : {
+                                rate_codes: rate.rate_codes,
+                                acriss: rate.vehicle.acriss,
+                                capabilities_codes: Object.keys(rate.capabilities).map((code) => code.replace(/\[|\]/g, ''))
+                            }                                
+                        };
+                    }),
+                    suggested: 'SOME_VALUE'
+                };
+            })            
         }
     })    
 }
